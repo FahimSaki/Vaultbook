@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Vaultbook local data and builds
+.devdata/
+dist/
+data/
