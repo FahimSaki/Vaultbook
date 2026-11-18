@@ -43,4 +43,7 @@ next-env.d.ts
 # Vaultbook local data and builds
 .devdata/
 dist/
-data/
+/data/
+
+!.env.example
+.e2e-data/

@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: vb_owner
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: vaultbook
+      VB_APP_PASSWORD: devpassword
+    ports: ["127.0.0.1:5433:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+volumes:
+  pgdata:

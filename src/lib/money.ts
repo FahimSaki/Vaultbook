@@ -11,6 +11,6 @@ export function toCents(input: string): number {
 }
 
 export const formatMoney = (cents: number, currency = "BDT") =>
-  new Intl.NumberFormat(undefined, { style: "currency", currency }).format(
+  new Intl.NumberFormat("en-BD", { style: "currency", currency }).format(
     cents / 100,
   );
