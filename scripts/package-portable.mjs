@@ -6,7 +6,11 @@ for (const d of ["app", "launcher", "node", "data/tmp"])
   fs.mkdirSync(`${out}/${d}`, { recursive: true });
 
 const cp = (from, to) =>
-  fs.cpSync(from, to, { recursive: true, dereference: true }); // pnpm uses symlinks
+  fs.cpSync(from, to, {
+    recursive: true,
+    dereference: false,
+    verbatimSymlinks: true,
+  });
 cp(".next/standalone", `${out}/app`);
 cp(".next/static", `${out}/app/.next/static`);
 if (fs.existsSync("public")) cp("public", `${out}/app/public`);

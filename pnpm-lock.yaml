@@ -238,6 +238,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      detect-libc:
+        specifier: 2.1.2
+        version: 2.1.2
       drizzle-orm:
         specifier: ^0.45.4
         version: 0.45.4(@electric-sql/pglite@0.5.16)(@types/pg@8.23.1)(pg@8.23.1)
