@@ -47,3 +47,6 @@ dist/
 
 !.env.example
 .e2e-data/
+
+# personal
+logs.md
