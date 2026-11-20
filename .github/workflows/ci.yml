@@ -1,0 +1,39 @@
+name: ci
+on: [push, pull_request]
+jobs:
+    checks:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+            - uses: actions/setup-node@v4
+              with: { node-version: 22, cache: pnpm }
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm lint && pnpm typecheck
+            - run: pnpm test
+    pg-tests:
+        runs-on: ubuntu-latest
+        services:
+            postgres:
+                image: postgres:16
+                env:
+                    {
+                        POSTGRES_USER: vb_owner,
+                        POSTGRES_PASSWORD: ci,
+                        POSTGRES_DB: vaultbook,
+                    }
+                ports: ["5432:5432"]
+                options: >-
+                    --health-cmd="pg_isready -U vb_owner" --health-interval=5s --health-retries=10
+        env:
+            DB_DRIVER: pg
+            MIGRATION_DATABASE_URL: postgres://vb_owner:ci@localhost:5432/vaultbook
+            DATABASE_URL: postgres://vb_app:ci@localhost:5432/vaultbook
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+            - uses: actions/setup-node@v4
+              with: { node-version: 22, cache: pnpm }
+            - run: pnpm install --frozen-lockfile
+            - run: psql "$MIGRATION_DATABASE_URL" -c "CREATE ROLE vb_app LOGIN PASSWORD 'ci' NOSUPERUSER NOBYPASSRLS"
+            - run: pnpm test
