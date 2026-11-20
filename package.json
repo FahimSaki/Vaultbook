@@ -14,7 +14,8 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "db:seed": "tsx scripts/seed.ts",
-    "db:migrate": "tsx --env-file=.env.local scripts/migrate.ts"
+    "db:migrate": "tsx --env-file=.env.local scripts/migrate.ts",
+    "selftest:portable": "bash scripts/selftest-portable.sh"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

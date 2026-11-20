@@ -1,49 +1,49 @@
 name: release
 on:
-    push:
-        tags: ["v*"]
+  push:
+    tags: ["v*"]
 jobs:
-    portable:
-        strategy:
-            matrix:
-                os: [windows-latest, ubuntu-latest]
-        runs-on: ${{ matrix.os }}
-        permissions:
-            contents: write
-        defaults:
-            run:
-                shell: bash
-        steps:
-            - uses: actions/checkout@v4
-            - uses: pnpm/action-setup@v4
-            - uses: actions/setup-node@v4
-              with: { node-version: 22, cache: pnpm }
-            - run: pnpm install --frozen-lockfile
-            - run: pnpm build
-            - run: node scripts/package-portable.mjs
-            - name: Bundle the Node runtime
-              run: |
-                  if [ "$RUNNER_OS" = Windows ]; then
-                    cp "$(which node)" dist/Vaultbook-Portable/node/node.exe
-                  else
-                    mkdir -p dist/Vaultbook-Portable/node/bin
-                    cp "$(which node)" dist/Vaultbook-Portable/node/bin/node
-                  fi
-            - name: Smoke test the packaged build
-              run: |
-                  cd dist/Vaultbook-Portable
-                  NODE=./node/node.exe; [ "$RUNNER_OS" = Windows ] || NODE=./node/bin/node
-                  DEPLOY_MODE=portable HOSTNAME=127.0.0.1 PORT=4783 DATA_DIR=./data MIGRATIONS_DIR=./app/migrations LAUNCHER_TOKEN=ci "$NODE" app/server.js &
-                  SERVER=$!
-                  curl --retry 30 --retry-delay 1 --retry-connrefused -sf http://127.0.0.1:4783/api/heartbeat
-                  curl -sf -H 'x-launcher-token: ci' http://127.0.0.1:4783/api/internal/selftest
-                  kill $SERVER || true
-            - name: Zip
-              run: |
-                  cd dist
-                  if [ "$RUNNER_OS" = Windows ]; then 7z a ../vaultbook-portable-${{ runner.os }}.zip Vaultbook-Portable
-                  else zip -rq ../vaultbook-portable-${{ runner.os }}.zip Vaultbook-Portable; fi
-            - uses: softprops/action-gh-release@v2
-              with:
-                  files: vaultbook-portable-*.zip
-                  prerelease: ${{ contains(github.ref_name, '-') }}
+  portable:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: node scripts/package-portable.mjs
+      - name: Bundle the Node runtime
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then
+            cp "$(which node)" dist/Vaultbook-Portable/node/node.exe
+          else
+            mkdir -p dist/Vaultbook-Portable/node/bin
+            cp "$(which node)" dist/Vaultbook-Portable/node/bin/node
+          fi
+      - name: Smoke test the packaged build
+        run: |
+          cd dist/Vaultbook-Portable
+          NODE=./node/node.exe; [ "$RUNNER_OS" = Windows ] || NODE=./node/bin/node
+          DEPLOY_MODE=portable HOSTNAME=127.0.0.1 PORT=4783 DATA_DIR=./data MIGRATIONS_DIR=./migrations LAUNCHER_TOKEN=ci "$NODE" app/server.js &
+          SERVER=$!
+          curl --retry 30 --retry-delay 1 --retry-connrefused -sf http://127.0.0.1:4783/api/heartbeat
+          curl -sf -H 'x-launcher-token: ci' http://127.0.0.1:4783/api/internal/selftest
+          kill $SERVER || true
+      - name: Zip
+        run: |
+          cd dist
+          if [ "$RUNNER_OS" = Windows ]; then 7z a ../vaultbook-portable-${{ runner.os }}.zip Vaultbook-Portable
+          else zip -rq ../vaultbook-portable-${{ runner.os }}.zip Vaultbook-Portable; fi
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: vaultbook-portable-*.zip
+          prerelease: ${{ contains(github.ref_name, '-') }}
