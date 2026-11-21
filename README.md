@@ -1,14 +1,29 @@
 ## Getting Started
 
-First, run the development server:
+First, install dependencies and start the development server:
+
+```bash
+pnpm install
+pnpm dev
+```
 
 ## Development
 
-pnpm install
+Check your code:
+
+```bash
 pnpm typecheck && pnpm lint && pnpm test
+```
+
+Build the portable version:
+
+```bash
 pnpm build && node scripts/package-portable.mjs
+```
 
-# copy a Node binary into dist/Vaultbook-Portable/node/bin/node, then
+Test the portable version:
 
-pnpm selftest:portable # expect {"ok":true,...}
+```bash
+pnpm selftest:portable
 bash dist/Vaultbook-Portable/start.sh
+```
