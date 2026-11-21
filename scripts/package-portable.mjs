@@ -12,6 +12,18 @@ const cp = (from, to) =>
     verbatimSymlinks: true,
   });
 cp(".next/standalone", `${out}/app`);
+const pnpmDir = "node_modules/.pnpm";
+
+if (fs.existsSync(pnpmDir)) {
+  for (const d of fs.readdirSync(pnpmDir)) {
+    if (!d.startsWith("@img+sharp")) continue;
+
+    const dest = `${out}/app/node_modules/.pnpm/${d}`;
+
+    fs.rmSync(dest, { recursive: true, force: true });
+    cp(`${pnpmDir}/${d}`, dest);
+  }
+}
 cp(".next/static", `${out}/app/.next/static`);
 if (fs.existsSync("public")) cp("public", `${out}/app/public`);
 cp("src/server/db/migrations", `${out}/app/migrations`);
