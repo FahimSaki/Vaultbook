@@ -66,7 +66,7 @@ export async function makeTestDb() {
     close: async () => {
       await app.end();
       await owner.end();
-      await adminPool.query("DROP DATABASE " + name + " WITH (FORCE)");
+      await adminPool.query("DROP DATABASE " + name);
       await adminPool.end();
     },
     driver,
