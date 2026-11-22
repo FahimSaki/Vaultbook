@@ -13,6 +13,10 @@ trap 'kill $PID 2>/dev/null || true; rm -rf "$DATA"' EXIT
 # wait for the server instead of racing it
 curl --retry 30 --retry-delay 1 --retry-connrefused -sf \
   http://127.0.0.1:4783/api/heartbeat >/dev/null
+
+# test an actual application page
+curl -sf -o /dev/null http://127.0.0.1:4783/setup
+
 curl -sf -H 'x-launcher-token: selftest' \
   http://127.0.0.1:4783/api/internal/selftest
 echo

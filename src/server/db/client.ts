@@ -1,5 +1,4 @@
-import { Pool } from "pg";
-import { drizzle as drizzlePg } from "drizzle-orm/node-postgres";
+import type { Pool } from "pg";
 import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 import * as schema from "./schema";
 import { config, isPortable } from "../config";
@@ -14,8 +13,16 @@ export function getDb(): Db {
   if (g.__vbDb) return g.__vbDb; // hosted cache, or the test seam
   if (isPortable) return requireSession().db; // throws Locked if locked
   if (!config.databaseUrl) throw new Error("DATABASE_URL is not set");
-  g.__vbPool = new Pool({ connectionString: config.databaseUrl, max: 10 });
-  g.__vbDb = drizzlePg(g.__vbPool, { schema }) as unknown as Db;
+
+  /* eslint-disable @typescript-eslint/no-require-imports */
+  // Loaded lazily so the portable build never touches `pg`.
+  const { Pool: PgPool } = require("pg") as typeof import("pg");
+  const { drizzle } =
+    require("drizzle-orm/node-postgres") as typeof import("drizzle-orm/node-postgres");
+  /* eslint-enable @typescript-eslint/no-require-imports */
+
+  g.__vbPool = new PgPool({ connectionString: config.databaseUrl, max: 10 });
+  g.__vbDb = drizzle(g.__vbPool, { schema }) as unknown as Db;
   return g.__vbDb;
 }
 

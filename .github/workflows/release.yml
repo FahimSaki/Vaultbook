@@ -36,6 +36,7 @@ jobs:
           DEPLOY_MODE=portable HOSTNAME=127.0.0.1 PORT=4783 DATA_DIR=./data MIGRATIONS_DIR=./migrations LAUNCHER_TOKEN=ci "$NODE" app/server.js &
           SERVER=$!
           curl --retry 30 --retry-delay 1 --retry-connrefused -sf http://127.0.0.1:4783/api/heartbeat
+          curl -sf -o /dev/null http://127.0.0.1:4783/setup
           curl -sf -H 'x-launcher-token: ci' http://127.0.0.1:4783/api/internal/selftest
           kill $SERVER || true
       - name: Zip
