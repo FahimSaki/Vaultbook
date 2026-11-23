@@ -1,0 +1,94 @@
+name: build-artifacts
+
+on:
+    workflow_dispatch:
+
+jobs:
+    checks:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+            - uses: actions/setup-node@v4
+              with: { node-version: 22, cache: pnpm }
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm lint && pnpm typecheck
+            - run: pnpm test
+
+    pg-tests:
+        runs-on: ubuntu-latest
+        services:
+            postgres:
+                image: postgres:16
+                env:
+                    {
+                        POSTGRES_USER: vb_owner,
+                        POSTGRES_PASSWORD: ci,
+                        POSTGRES_DB: vaultbook,
+                    }
+                ports: ["5432:5432"]
+                options: >-
+                    --health-cmd="pg_isready -U vb_owner" --health-interval=5s --health-retries=10
+        env:
+            DB_DRIVER: pg
+            MIGRATION_DATABASE_URL: postgres://vb_owner:ci@localhost:5432/vaultbook
+            DATABASE_URL: postgres://vb_app:ci@localhost:5432/vaultbook
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+            - uses: actions/setup-node@v4
+              with: { node-version: 22, cache: pnpm }
+            - run: pnpm install --frozen-lockfile
+            - run: psql "$MIGRATION_DATABASE_URL" -c "CREATE ROLE vb_app LOGIN PASSWORD 'ci' NOSUPERUSER NOBYPASSRLS"
+            - run: pnpm test
+
+    portable:
+        needs: [checks, pg-tests]
+        strategy:
+            matrix:
+                os: [windows-latest, ubuntu-latest]
+        runs-on: ${{ matrix.os }}
+        defaults:
+            run:
+                shell: bash
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+            - uses: actions/setup-node@v4
+              with: { node-version: 22, cache: pnpm }
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm build
+            - run: node scripts/package-portable.mjs
+
+            - name: Bundle the Node runtime
+              run: |
+                  if [ "$RUNNER_OS" = Windows ]; then
+                    cp "$(which node)" dist/Vaultbook-Portable/node/node.exe
+                  else
+                    mkdir -p dist/Vaultbook-Portable/node/bin
+                    cp "$(which node)" dist/Vaultbook-Portable/node/bin/node
+                  fi
+
+            - name: Smoke test the packaged build
+              run: |
+                  cd dist/Vaultbook-Portable
+                  NODE=./node/node.exe; [ "$RUNNER_OS" = Windows ] || NODE=./node/bin/node
+                  DEPLOY_MODE=portable HOSTNAME=127.0.0.1 PORT=4783 DATA_DIR=./data MIGRATIONS_DIR=./migrations LAUNCHER_TOKEN=ci "$NODE" app/server.js &
+                  SERVER=$!
+                  curl --retry 30 --retry-delay 1 --retry-connrefused -sf http://127.0.0.1:4783/api/heartbeat
+                  curl -sf -o /dev/null http://127.0.0.1:4783/setup
+                  curl -sf -H 'x-launcher-token: ci' http://127.0.0.1:4783/api/internal/selftest
+                  kill $SERVER || true
+
+            - name: Zip
+              run: |
+                  cd dist
+                  if [ "$RUNNER_OS" = Windows ]; then 7z a ../vaultbook-portable-${{ runner.os }}.zip Vaultbook-Portable
+                  else zip -rq ../vaultbook-portable-${{ runner.os }}.zip Vaultbook-Portable; fi
+
+            - name: Upload portable artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: vaultbook-portable-${{ runner.os }}
+                  path: vaultbook-portable-${{ runner.os }}.zip
+                  if-no-files-found: error
