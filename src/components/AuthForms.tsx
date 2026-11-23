@@ -7,8 +7,15 @@ import { setupAction, unlockAction, recoverAction } from "@/app/(auth)/actions";
 const input =
   "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm";
 
-function RecoveryCode({ code }: { code: string }) {
-  const [ok, setOk] = useState(false);
+export function RecoveryCode({
+  code,
+  href = "/products",
+}: {
+  code: string;
+  href?: string;
+}) {
+  const [typed, setTyped] = useState("");
+  const ok = typed.trim() === code.slice(-6);
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">
@@ -16,21 +23,26 @@ function RecoveryCode({ code }: { code: string }) {
       </h1>
       <p className="text-sm text-muted-foreground">
         It is shown once. If you forget your password and lose this code, your
-        data cannot be recovered.
+        data cannot be recovered. Keep it on paper, not in a photo or a file.
       </p>
       <code className="block break-all rounded-lg bg-muted p-3 text-sm">
         {code}
       </code>
-      <label className="flex items-center gap-2 text-sm">
+      <label className="block space-y-1 text-sm">
+        <span>
+          To confirm you wrote it down, type the last 6 characters (capitals
+          matter):
+        </span>
         <input
-          type="checkbox"
-          checked={ok}
-          onChange={(e) => setOk(e.target.checked)}
+          className={input}
+          value={typed}
+          onChange={(e) => setTyped(e.target.value)}
+          autoComplete="off"
+          spellCheck={false}
         />
-        I wrote it down
       </label>
       {ok ? (
-        <Link className="underline" href="/products">
+        <Link className="underline" href={href}>
           Continue
         </Link>
       ) : null}
@@ -92,6 +104,9 @@ export function UnlockForm() {
         <Link className="underline" href="/recover">
           Forgot password?
         </Link>
+      </p>
+      <p className="text-xs text-muted-foreground">
+        No password and no recovery code means the data cannot be recovered.
       </p>
     </form>
   );

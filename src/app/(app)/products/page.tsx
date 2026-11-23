@@ -1,7 +1,7 @@
 import { getCtx } from "@/server/auth/ctx";
 import { withTenant } from "@/server/db/tenant";
 import { products } from "@/server/db/schema";
-import { formatMoney } from "@/lib/money";
+import { COMMON_CURRENCIES, formatMoney } from "@/lib/money";
 import { Button } from "@/components/ui/button";
 import { addDemoProduct } from "./actions";
 
@@ -32,6 +32,19 @@ export default async function ProductsPage() {
           required
           className="w-24 rounded-lg border px-2 py-1 text-sm"
         />
+        <input
+          name="currency"
+          list="currencies"
+          placeholder="BDT"
+          maxLength={3}
+          aria-label="Currency (blank means BDT)"
+          className="w-20 rounded-lg border px-2 py-1 text-sm uppercase"
+        />
+        <datalist id="currencies">
+          {COMMON_CURRENCIES.map((c) => (
+            <option key={c} value={c} />
+          ))}
+        </datalist>
         <Button type="submit">Add</Button>
       </form>
       <ul className="divide-y">
@@ -40,7 +53,7 @@ export default async function ProductsPage() {
             <span>
               {p.sku} · {p.name}
             </span>
-            <span>{formatMoney(p.sellPriceCents)}</span>
+            <span>{formatMoney(p.sellPriceCents, p.currency)}</span>
           </li>
         ))}
         {rows.length === 0 ? (

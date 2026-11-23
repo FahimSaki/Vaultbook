@@ -65,6 +65,7 @@ export const products = pgTable("products", {
   name: text("name").notNull(),
   description: text("description"),
   sellPriceCents: integer("sell_price_cents").notNull(),
+  currency: text("currency").notNull().default("BDT"), // add this
   reorderLevel: integer("reorder_level").notNull().default(0),
   stockOnHand: integer("stock_on_hand").notNull().default(0),
   archivedAt: ts("archived_at"),
@@ -85,6 +86,7 @@ export const priceHistory = pgTable("price_history", {
   orgId: uuid("org_id").notNull(),
   productId: uuid("product_id").notNull(),
   priceCents: integer("price_cents").notNull(),
+  currency: text("currency").notNull().default("BDT"), // add this
   changedBy: text("changed_by").notNull(),
   changedAt: ts("changed_at").notNull().defaultNow(),
 });

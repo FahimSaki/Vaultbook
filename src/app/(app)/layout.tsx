@@ -18,6 +18,9 @@ export default async function AppLayout({
         </Link>
         <div className="flex items-center gap-3">
           <IdleLock />
+          <Link href="/settings" className="text-sm underline">
+            Settings
+          </Link>
           <form action={lockAction}>
             <Button type="submit" variant="outline" size="sm">
               Lock
