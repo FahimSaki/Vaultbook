@@ -7,12 +7,8 @@ export class EncryptedStore implements BlobStore {
     private inner: BlobStore,
     private key: Buffer,
   ) {}
-  put(k: string, d: Buffer) {
-    return this.inner.put(
-      k,
-      seal(this.key, d, "img:" + k),
-      "application/octet-stream",
-    );
+  put(k: string, d: Buffer, contentType = "application/octet-stream") {
+    return this.inner.put(k, seal(this.key, d, "img:" + k), contentType);
   }
   async get(k: string) {
     return open(this.key, await this.inner.get(k), "img:" + k);

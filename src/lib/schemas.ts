@@ -44,3 +44,6 @@ export type ProductOwnerDTO = ProductDTO & {
   costCents: number | null;
   marginPercent: number | null;
 };
+export const isOwnerDTO = (
+  p: ProductDTO | ProductOwnerDTO,
+): p is ProductOwnerDTO => "costCents" in p;
