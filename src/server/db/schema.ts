@@ -86,7 +86,7 @@ export const priceHistory = pgTable("price_history", {
   orgId: uuid("org_id").notNull(),
   productId: uuid("product_id").notNull(),
   priceCents: integer("price_cents").notNull(),
-  currency: text("currency").notNull().default("BDT"), // add this
+  currency: text("currency").notNull().default("BDT"),
   changedBy: text("changed_by").notNull(),
   changedAt: ts("changed_at").notNull().defaultNow(),
 });

@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import path from "node:path";
 
 const out = "dist/Vaultbook-Portable";
 fs.rmSync("dist", { recursive: true, force: true });
@@ -11,6 +12,7 @@ const cp = (from, to) =>
     dereference: false,
     verbatimSymlinks: true,
   });
+
 cp(".next/standalone", `${out}/app`);
 const pnpmDir = "node_modules/.pnpm";
 
@@ -24,16 +26,33 @@ if (fs.existsSync(pnpmDir)) {
     cp(`${pnpmDir}/${d}`, dest);
   }
 }
+
 cp(".next/static", `${out}/app/.next/static`);
 if (fs.existsSync("public")) cp("public", `${out}/app/public`);
 cp("src/server/db/migrations", `${out}/app/migrations`);
 fs.cpSync("packages/portable/launcher.js", `${out}/launcher/launcher.js`);
+
 for (const f of ["start.bat", "start.sh", "README.txt"])
   fs.cpSync(`packages/portable/${f}`, `${out}/${f}`);
 
 // never ship local env files or dev data
 for (const f of fs.readdirSync(`${out}/app`))
   if (f.startsWith(".env")) fs.rmSync(`${out}/app/${f}`, { force: true });
+
 fs.rmSync(`${out}/app/.devdata`, { recursive: true, force: true });
 fs.writeFileSync(`${out}/data/.keep`, "");
+
+fs.writeFileSync(`${out}/launcher/package.json`, '{"type":"module"}');
+
+if (process.argv.includes("--with-node")) {
+  const dest =
+    process.platform === "win32"
+      ? `${out}/node/node.exe`
+      : `${out}/node/bin/node`;
+
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.copyFileSync(process.execPath, dest);
+  fs.chmodSync(dest, 0o755);
+}
+
 console.log("Packaged to " + out);

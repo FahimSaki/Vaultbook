@@ -84,6 +84,9 @@ async function start(
   await migrate(pgliteExec(pg), config.migrationsDir, portableFilter); // also applies upgrades
   const db = drizzle(pg, { schema }) as unknown as Db;
   const [org] = await db.select().from(schema.organizations).limit(1);
+
+  if (!org) throw new UserError("This vault is empty or damaged.");
+
   const dek = unwrapDek(kek, org.wrappedDek, org.id);
   const s: Session = {
     pg,
@@ -257,6 +260,9 @@ export async function unlockWithRecovery(
   code: string,
   newPassword: string,
 ): Promise<string> {
+  if (newPassword.length < 12)
+    throw new UserError("Use at least 12 characters.");
+
   if (g.__vb) await lockVault();
   const { salt, wrappedKek, body } = parse(await fs.readFile(vaultPath()));
   let kek: Buffer, tar: Buffer;

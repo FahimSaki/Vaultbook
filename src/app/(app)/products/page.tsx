@@ -1,67 +1,84 @@
+import Link from "next/link";
 import { getCtx } from "@/server/auth/ctx";
-import { withTenant } from "@/server/db/tenant";
-import { products } from "@/server/db/schema";
-import { COMMON_CURRENCIES, formatMoney } from "@/lib/money";
-import { Button } from "@/components/ui/button";
-import { addDemoProduct } from "./actions";
+import { listProducts } from "@/server/services/products";
+import { formatMoney } from "@/lib/money";
+import { Button, buttonVariants } from "@/components/ui/button";
 
-export default async function ProductsPage() {
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; low?: string }>;
+}) {
   const ctx = await getCtx();
-  const rows = await withTenant(ctx, (tx) => tx.select().from(products), {
-    write: false,
-  });
+  const { q, low } = await searchParams;
+  const rows = await listProducts(ctx, { q, lowStock: low === "1" });
+  const owner = ctx.role === "owner";
   return (
-    <div className="space-y-6">
-      <form action={addDemoProduct} className="flex gap-2" autoComplete="off">
-        <input
-          name="sku"
-          placeholder="SKU"
-          required
-          className="rounded-lg border px-2 py-1 text-sm"
-        />
-        <input
-          name="name"
-          placeholder="Name"
-          required
-          className="rounded-lg border px-2 py-1 text-sm"
-        />
-        <input
-          name="price"
-          placeholder="Price"
-          inputMode="decimal"
-          required
-          className="w-24 rounded-lg border px-2 py-1 text-sm"
-        />
-        <input
-          name="currency"
-          list="currencies"
-          placeholder="BDT"
-          maxLength={3}
-          aria-label="Currency (blank means BDT)"
-          className="w-20 rounded-lg border px-2 py-1 text-sm uppercase"
-        />
-        <datalist id="currencies">
-          {COMMON_CURRENCIES.map((c) => (
-            <option key={c} value={c} />
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <form className="flex items-center gap-2 text-sm">
+          <input
+            name="q"
+            defaultValue={q}
+            placeholder="Search name or SKU"
+            className="rounded-lg border border-input bg-background px-3 py-1.5"
+          />
+          <label className="flex items-center gap-1">
+            <input
+              type="checkbox"
+              name="low"
+              value="1"
+              defaultChecked={low === "1"}
+            />{" "}
+            Low stock
+          </label>
+          <Button type="submit" variant="outline" size="sm">
+            Filter
+          </Button>
+        </form>
+        <Link href="/products/new" className={buttonVariants()}>
+          Add product
+        </Link>
+      </div>
+      <table className="w-full text-sm">
+        <thead className="text-left text-muted-foreground">
+          <tr>
+            <th className="py-2">Product</th>
+            <th>Stock</th>
+            <th>Price</th>
+            {owner ? <th>Margin</th> : null}
+          </tr>
+        </thead>
+        <tbody className="divide-y">
+          {rows.map((p) => (
+            <tr key={p.id}>
+              <td className="py-2">
+                <Link className="underline" href={"/products/" + p.id}>
+                  {p.sku} · {p.name}
+                </Link>
+              </td>
+              <td className={p.lowStock ? "font-medium text-destructive" : ""}>
+                {p.stockOnHand}
+              </td>
+              <td>{formatMoney(p.sellPriceCents, p.currency)}</td>
+              {owner ? (
+                <td>
+                  {"marginPercent" in p && p.marginPercent != null
+                    ? p.marginPercent + "%"
+                    : "–"}
+                </td>
+              ) : null}
+            </tr>
           ))}
-        </datalist>
-        <Button type="submit">Add</Button>
-      </form>
-      <ul className="divide-y">
-        {rows.map((p) => (
-          <li key={p.id} className="flex justify-between py-2 text-sm">
-            <span>
-              {p.sku} · {p.name}
-            </span>
-            <span>{formatMoney(p.sellPriceCents, p.currency)}</span>
-          </li>
-        ))}
-        {rows.length === 0 ? (
-          <li className="py-2 text-sm text-muted-foreground">
-            No products yet.
-          </li>
-        ) : null}
-      </ul>
+          {rows.length === 0 ? (
+            <tr>
+              <td colSpan={4} className="py-3 text-muted-foreground">
+                No products.
+              </td>
+            </tr>
+          ) : null}
+        </tbody>
+      </table>
     </div>
   );
 }

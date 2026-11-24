@@ -29,6 +29,8 @@ export function normalizeCurrency(input?: string | null): string {
   return c;
 }
 
+export const MAX_CENTS = 2_147_483_647;
+
 export function toCents(input: string): number {
   const [whole, frac = ""] = input.trim().replace(",", ".").split(".");
   if (
@@ -36,9 +38,12 @@ export function toCents(input: string): number {
     frac.length > 2 ||
     (frac && !/^[0-9]+$/.test(frac))
   ) {
-    throw new Error("Invalid amount");
+    throw new UserError("Enter an amount like 12 or 12.50.");
   }
-  return Number(whole) * 100 + Number(frac.padEnd(2, "0") || "0");
+
+  const cents = Number(whole) * 100 + Number(frac.padEnd(2, "0") || "0");
+  if (cents > MAX_CENTS) throw new UserError("That amount is too large.");
+  return cents;
 }
 
 // Every currency is stored x100 and shown with 2 decimals, so JPY etc. stay consistent.
