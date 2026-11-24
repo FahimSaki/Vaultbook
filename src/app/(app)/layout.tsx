@@ -1,4 +1,5 @@
 import Link from "next/link";
+
 import { getCtx } from "@/server/auth/ctx";
 import { IdleLock } from "@/components/Idlelock";
 import { Button } from "@/components/ui/button";
@@ -18,16 +19,22 @@ export default async function AppLayout({
           <Link href="/products" className="font-semibold">
             Vaultbook
           </Link>
+
           <nav className="flex gap-4 text-sm">
+            <Link href="/dashboard">Dashboard</Link>
             <Link href="/products">Products</Link>
+            <Link href="/buylist">Buy list</Link>
             <Link href="/categories">Categories</Link>
           </nav>
         </div>
+
         <div className="flex items-center gap-3">
           <IdleLock />
+
           <Link href="/settings" className="text-sm underline">
             Settings
           </Link>
+
           <form action={lockAction}>
             <Button type="submit" variant="outline" size="sm">
               Lock
@@ -35,6 +42,7 @@ export default async function AppLayout({
           </form>
         </div>
       </header>
+
       {children}
     </div>
   );
