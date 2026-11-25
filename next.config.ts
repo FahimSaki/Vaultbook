@@ -6,18 +6,15 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "script-src 'self' 'unsafe-inline'",
   "connect-src 'self'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "object-src 'none'",
   "frame-ancestors 'none'",
 ].join("; ");
 
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
-  experimental: {
-    serverActions: {
-      bodySizeLimit: "3mb",
-    },
-  },
-
   images: { unoptimized: true },
   serverExternalPackages: ["@electric-sql/pglite", "sharp"],
   turbopack: {

@@ -21,6 +21,7 @@ import { Locked, UserError } from "@/lib/errors";
 // File layout: MAGIC(8) | salt(16) | len(2) | recovery-wrapped KEK | sealed DB tarball
 const MAGIC = Buffer.from("VBVAULT1");
 const IDLE_MS = 15 * 60 * 1000;
+const BACKUP_INTERVAL = 24 * 60 * 60 * 1000;
 const vaultPath = () => path.join(config.dataDir, "vault.enc");
 
 export type Session = {
@@ -36,7 +37,6 @@ export type Session = {
   timer?: NodeJS.Timeout;
   chain: Promise<void>;
   lastActive: number;
-  lastBackup: number;
   id: string;
 };
 
@@ -100,7 +100,6 @@ async function start(
     dirty: false,
     chain: Promise.resolve(),
     lastActive: Date.now(),
-    lastBackup: 0,
     id: randomBytes(8).toString("hex"),
   };
   g.__vb = s;
@@ -177,9 +176,17 @@ async function persist(s: Session) {
   await fh.writeFile(out);
   await fh.sync(); // flush to the stick before renaming
   await fh.close();
-  if (Date.now() - s.lastBackup > 10 * 60 * 1000) {
+  let shouldBackup = true;
+
+  try {
+    const stat = await fs.stat(vaultPath() + ".bak1");
+    shouldBackup = Date.now() - stat.mtimeMs >= BACKUP_INTERVAL;
+  } catch {
+    // No previous backup exists.
+  }
+
+  if (shouldBackup) {
     await rotateBackups();
-    s.lastBackup = Date.now();
   }
   await fs.rename(tmp, vaultPath()); // atomic replace
   s.dirty = false;
