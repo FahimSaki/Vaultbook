@@ -65,7 +65,7 @@ export const products = pgTable("products", {
   name: text("name").notNull(),
   description: text("description"),
   sellPriceCents: integer("sell_price_cents").notNull(),
-  currency: text("currency").notNull().default("BDT"), // add this
+  currency: text("currency").notNull().default("BDT"),
   reorderLevel: integer("reorder_level").notNull().default(0),
   stockOnHand: integer("stock_on_hand").notNull().default(0),
   archivedAt: ts("archived_at"),

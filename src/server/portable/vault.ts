@@ -32,6 +32,7 @@ export type Session = {
   wrappedKek: Buffer;
   orgId: string;
   dirty: boolean;
+  saveError?: string;
   timer?: NodeJS.Timeout;
   chain: Promise<void>;
   lastActive: number;
@@ -182,6 +183,7 @@ async function persist(s: Session) {
   }
   await fs.rename(tmp, vaultPath()); // atomic replace
   s.dirty = false;
+  s.saveError = undefined;
 }
 
 async function rotateBackups() {
@@ -196,11 +198,17 @@ async function rotateBackups() {
 export function markDirty() {
   const s = g.__vb;
   if (!s) return;
+
   s.dirty = true;
   clearTimeout(s.timer);
+
   s.timer = setTimeout(
     () =>
-      void flush().catch((e) => console.error("vault save failed:", e.message)),
+      void flush().catch((e) => {
+        s.saveError = e instanceof Error ? e.message : String(e);
+        console.error("vault save failed:", s.saveError);
+        markDirty();
+      }),
     2000,
   );
 }

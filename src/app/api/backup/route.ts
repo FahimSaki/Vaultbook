@@ -1,11 +1,15 @@
-import { getCtx } from "@/server/auth/ctx";
+import { getCtxOrNull } from "@/server/auth/ctx";
 import { readVaultForBackup } from "@/server/portable/vault";
 import { hostBlocked } from "@/server/portable/host";
 
 export async function GET(req: Request) {
   const blocked = hostBlocked(req);
   if (blocked) return blocked;
-  await getCtx(); // must be unlocked in this browser
+  const ctx = await getCtxOrNull();
+
+  if (!ctx) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const file = await readVaultForBackup(); // already sealed, safe to hand over
   const day = new Date().toISOString().slice(0, 10);
   return new Response(new Uint8Array(file), {

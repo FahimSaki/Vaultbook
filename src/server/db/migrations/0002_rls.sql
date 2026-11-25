@@ -57,7 +57,7 @@ SELECT USING (
         org_id = app_org()
         AND app_is_owner()
     );
--- Organizations (insert policy comes in 0004_signup.sql)
+-- Organizations (insert policy comes in 0006_signup.sql)
 ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE organizations FORCE ROW LEVEL SECURITY;
 CREATE POLICY org_self ON organizations FOR

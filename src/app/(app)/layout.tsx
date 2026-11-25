@@ -21,6 +21,7 @@ export default async function AppLayout({
           </Link>
 
           <nav className="flex gap-4 text-sm">
+            <Link href="/import">Import / export</Link>
             <Link href="/dashboard">Dashboard</Link>
             <Link href="/products">Products</Link>
             <Link href="/buylist">Buy list</Link>
