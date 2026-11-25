@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { importCsvAction, previewCsvAction } from "@/app/(app)/import/actions";
 import type { CsvPreview } from "@/server/services/csv";
 
+const MAX_FILE_BYTES = 900_000; // stay under the 1 MB Server Action body limit
+
 export function CsvImport() {
   const [text, setText] = useState("");
   const [preview, setPreview] = useState<CsvPreview | null>(null);
@@ -13,7 +15,17 @@ export function CsvImport() {
   async function onFile(f: File | undefined) {
     setMsg("");
     setPreview(null);
+    setText("");
     if (!f) return;
+    if (f.size > MAX_FILE_BYTES) {
+      setPreview({
+        count: 0,
+        errors: [],
+        error:
+          "File too large (max about 0.9 MB). Split it into smaller files.",
+      });
+      return;
+    }
     const t = await f.text();
     setText(t);
     start(async () => setPreview(await previewCsvAction(t)));

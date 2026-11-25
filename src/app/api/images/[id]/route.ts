@@ -25,7 +25,7 @@ export async function GET(req: Request, { params }: Params) {
       headers: {
         "Content-Type": "image/webp",
         "X-Content-Type-Options": "nosniff",
-        "Cache-Control": "no-store", // do not leave photos in the host PC's browser cache
+        "Cache-Control": "no-store",
       },
     });
   } catch (e) {

@@ -33,15 +33,11 @@ export async function receiveBuyItemAction(
   form: FormData,
 ): Promise<FormState> {
   const ctx = await getCtx();
+  const qty = Number(text(form, "qty"));
+  if (!Number.isInteger(qty) || qty < 1)
+    return { error: "Quantity must be a whole number, at least 1." };
   try {
-    const qty = Number(text(form, "qty"));
-
-    if (!Number.isInteger(qty) || qty <= 0) {
-      return { error: "Quantity must be a positive integer." };
-    }
-
     const cost = text(form, "cost").trim();
-
     await receiveBuyItem(ctx, id, qty, cost ? toCents(cost) : null);
   } catch (e) {
     return fail(e);

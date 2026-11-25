@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { assertLocalHost } from "@/server/portable/host";
+import { isPortable } from "@/server/config";
 import { Heartbeat } from "@/components/Heartbeat";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -27,7 +28,7 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Heartbeat />
+        {isPortable ? <Heartbeat /> : null}
         {children}
       </body>
     </html>

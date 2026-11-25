@@ -29,3 +29,10 @@ export function getDb(): Db {
 export function __setDbForTests(db: Db | undefined) {
   g.__vbDb = db;
 }
+
+/** Swaps the active db and returns the previous one, so seeding can put it back. */
+export function __swapDb(db: Db | undefined): Db | undefined {
+  const prev = g.__vbDb;
+  g.__vbDb = db;
+  return prev;
+}

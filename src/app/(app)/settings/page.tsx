@@ -1,8 +1,11 @@
+import { notFound } from "next/navigation";
 import { getCtx } from "@/server/auth/ctx";
+import { isPortable } from "@/server/config";
 import { ChangePasswordForm } from "@/components/SettingsForms";
 import { buttonVariants } from "@/components/ui/button";
 
 export default async function SettingsPage() {
+  if (!isPortable) notFound();
   await getCtx();
   return (
     <div className="space-y-10">
@@ -21,9 +24,11 @@ export default async function SettingsPage() {
       <section className="space-y-3">
         <h2 className="font-medium">Backup</h2>
         <p className="max-w-prose text-sm text-muted-foreground">
-          Downloads a sealed copy of your data. It is encrypted with your
-          current password, so it is safe to store on another stick. Product
-          photos are not included yet; copy the data/blobs folder for those.
+          Downloads one .tar file with your sealed data and your product photos.
+          Everything inside is encrypted with your current password, so it is
+          safe to store on another stick. Open it with any archive tool; to
+          restore, copy vault.enc and the blobs folder into an empty data
+          folder.
         </p>
         <a
           href="/api/backup"

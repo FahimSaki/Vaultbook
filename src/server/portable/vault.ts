@@ -21,7 +21,7 @@ import { Locked, UserError } from "@/lib/errors";
 // File layout: MAGIC(8) | salt(16) | len(2) | recovery-wrapped KEK | sealed DB tarball
 const MAGIC = Buffer.from("VBVAULT1");
 const IDLE_MS = 15 * 60 * 1000;
-const BACKUP_INTERVAL = 24 * 60 * 60 * 1000;
+const BACKUP_EVERY_MS = 6 * 60 * 60 * 1000; // rotate .bak files at most every 6 hours
 const vaultPath = () => path.join(config.dataDir, "vault.enc");
 
 export type Session = {
@@ -33,10 +33,10 @@ export type Session = {
   wrappedKek: Buffer;
   orgId: string;
   dirty: boolean;
-  saveError?: string;
   timer?: NodeJS.Timeout;
   chain: Promise<void>;
   lastActive: number;
+  saveError?: string; // set while saves are failing, shown as a banner in the UI
   id: string;
 };
 
@@ -105,7 +105,8 @@ async function start(
   g.__vb = s;
   if (!g.__vbIdle) {
     g.__vbIdle = setInterval(() => {
-      if (g.__vb && Date.now() - g.__vb.lastActive > IDLE_MS) void lockVault();
+      if (g.__vb && Date.now() - g.__vb.lastActive > IDLE_MS)
+        void lockVault({ force: true }).catch(() => {});
     }, 30_000);
     g.__vbIdle.unref();
   }
@@ -149,7 +150,7 @@ export const __resetThrottleForTests = () => {
 export async function unlockVault(password: string): Promise<Session> {
   if (Date.now() < failures.until)
     throw new UserError("Too many attempts. Wait a moment.");
-  if (g.__vb) await lockVault();
+  if (g.__vb) await lockVault({ force: true });
   const { salt, wrappedKek, body } = parse(await fs.readFile(vaultPath()));
   const kek = deriveKekFromPassword(password, salt);
   let tar: Buffer;
@@ -176,21 +177,20 @@ async function persist(s: Session) {
   await fh.writeFile(out);
   await fh.sync(); // flush to the stick before renaming
   await fh.close();
-  let shouldBackup = true;
-
-  try {
-    const stat = await fs.stat(vaultPath() + ".bak1");
-    shouldBackup = Date.now() - stat.mtimeMs >= BACKUP_INTERVAL;
-  } catch {
-    // No previous backup exists.
-  }
-
-  if (shouldBackup) {
-    await rotateBackups();
-  }
+  if (await backupDue()) await rotateBackups();
   await fs.rename(tmp, vaultPath()); // atomic replace
   s.dirty = false;
   s.saveError = undefined;
+}
+
+// Judged by the age of .bak1 on disk, so five quick sessions cannot push out every older copy.
+async function backupDue() {
+  try {
+    const st = await fs.stat(vaultPath() + ".bak1");
+    return Date.now() - st.mtimeMs > BACKUP_EVERY_MS;
+  } catch {
+    return true;
+  }
 }
 
 async function rotateBackups() {
@@ -205,19 +205,15 @@ async function rotateBackups() {
 export function markDirty() {
   const s = g.__vb;
   if (!s) return;
-
   s.dirty = true;
   clearTimeout(s.timer);
-
-  s.timer = setTimeout(
-    () =>
-      void flush().catch((e) => {
-        s.saveError = e instanceof Error ? e.message : String(e);
-        console.error("vault save failed:", s.saveError);
-        markDirty();
-      }),
-    2000,
-  );
+  s.timer = setTimeout(() => {
+    flush().catch((e: Error) => {
+      s.saveError = e.message;
+      console.error("vault save failed:", e.message);
+      if (g.__vb === s) markDirty(); // keep retrying, e.g. once the stick is plugged back in
+    });
+  }, 2000);
 }
 
 export function flush(): Promise<void> {
@@ -228,18 +224,30 @@ export function flush(): Promise<void> {
   return run;
 }
 
-export async function lockVault() {
+/**
+ * Seals and closes the vault.
+ * Without `force`, a failed save keeps the session open (so no edits are lost) and throws.
+ * With `force` (idle timeout, process exit) the keys are wiped regardless.
+ */
+export async function lockVault(opts: { force?: boolean } = {}) {
   const s = g.__vb;
   if (!s) return;
   clearTimeout(s.timer);
+  let saveFailure: unknown;
   try {
     await flush();
-  } finally {
-    g.__vb = null;
-    await s.pg.close().catch(() => {});
-    s.kek.fill(0);
-    s.dek.fill(0);
+  } catch (e) {
+    if (!opts.force) {
+      markDirty(); // keep retrying in the background
+      throw e;
+    }
+    saveFailure = e;
   }
+  g.__vb = null;
+  await s.pg.close().catch(() => {});
+  s.kek.fill(0);
+  s.dek.fill(0);
+  if (saveFailure) throw saveFailure;
 }
 
 /** Test helper: simulate a crash. Drops the session without saving. */
@@ -278,7 +286,7 @@ export async function unlockWithRecovery(
   if (newPassword.length < 12)
     throw new UserError("Use at least 12 characters.");
 
-  if (g.__vb) await lockVault();
+  if (g.__vb) await lockVault({ force: true });
   const { salt, wrappedKek, body } = parse(await fs.readFile(vaultPath()));
   let kek: Buffer, tar: Buffer;
   try {
