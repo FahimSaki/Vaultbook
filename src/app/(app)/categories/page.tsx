@@ -1,6 +1,7 @@
 import { getCtx } from "@/server/auth/ctx";
 import { listCategories } from "@/server/services/categories";
 import { Button } from "@/components/ui/button";
+import { RenameCategoryForm } from "@/components/CategoryForms";
 import { addCategoryAction, deleteCategoryAction } from "./actions";
 
 export default async function CategoriesPage() {
@@ -25,11 +26,8 @@ export default async function CategoriesPage() {
       </form>
       <ul className="divide-y">
         {rows.map((c) => (
-          <li
-            key={c.id}
-            className="flex items-center justify-between py-2 text-sm"
-          >
-            {c.name}
+          <li key={c.id} className="flex items-center gap-2 py-2 text-sm">
+            <RenameCategoryForm id={c.id} name={c.name} />
             <form action={deleteCategoryAction.bind(null, c.id)}>
               <Button type="submit" variant="ghost" size="sm">
                 Delete
