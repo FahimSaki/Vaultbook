@@ -15,6 +15,9 @@ export async function POST(
   if (blocked) return blocked;
   const ctx = await getCtxOrNull();
   if (!ctx) return Response.json({ error: "Locked" }, { status: 401 });
+  const declared = Number(req.headers.get("content-length"));
+  if (declared > MAX_IMAGE_BYTES + 1024 * 1024)
+    return Response.json({ error: "Max 5 MB" }, { status: 413 });
   const { id: productId } = await params;
   if (!z.uuid().safeParse(productId).success)
     return Response.json({ error: "Not found" }, { status: 404 });

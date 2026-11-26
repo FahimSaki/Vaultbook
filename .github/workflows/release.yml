@@ -3,7 +3,10 @@ on:
   push:
     tags: ["v*"]
 jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
   portable:
+    needs: ci
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest]
@@ -33,7 +36,7 @@ jobs:
         run: |
           cd dist/Vaultbook-Portable
           NODE=./node/node.exe; [ "$RUNNER_OS" = Windows ] || NODE=./node/bin/node
-          DEPLOY_MODE=portable HOSTNAME=127.0.0.1 PORT=4783 DATA_DIR=./data MIGRATIONS_DIR=./migrations LAUNCHER_TOKEN=ci "$NODE" app/server.js &
+          DEPLOY_MODE=portable HOSTNAME=127.0.0.1 PORT=4783 DATA_DIR=./data MIGRATIONS_DIR=./app/migrations LAUNCHER_TOKEN=ci "$NODE" app/server.js &
           SERVER=$!
           curl --retry 30 --retry-delay 1 --retry-connrefused -sf http://127.0.0.1:4783/api/heartbeat
           curl -sf -o /dev/null http://127.0.0.1:4783/setup

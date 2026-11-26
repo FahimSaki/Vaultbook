@@ -8,6 +8,7 @@ export const config = {
   migrationUrl: process.env.MIGRATION_DATABASE_URL,
   masterKey: process.env.MASTER_KEY,
   s3Bucket: process.env.S3_BUCKET,
+  allowSignup: process.env.ALLOW_SIGNUP === "1",
 };
 
 export const isPortable = config.mode === "portable";

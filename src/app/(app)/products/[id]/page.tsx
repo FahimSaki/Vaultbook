@@ -89,7 +89,7 @@ export default async function ProductPage({
       {points.length > 1 ? (
         <section className="space-y-2">
           <h2 className="font-medium">Price history</h2>
-          <PriceChart points={points} currency={""} />
+          <PriceChart points={points} currency={p.currency} />
         </section>
       ) : null}
 
