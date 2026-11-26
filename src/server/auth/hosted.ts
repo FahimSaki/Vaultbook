@@ -14,10 +14,8 @@ export async function hostedSession() {
 
 export async function signupAllowed(): Promise<boolean> {
   if (config.allowSignup) return true;
-  const [row] = await getDb()
-    .select({ n: sql<number>`count(*)::int` })
-    .from(user);
-  return row.n === 0;
+  const rows = await getDb().select({ id: user.id }).from(user).limit(1);
+  return rows.length === 0;
 }
 
 // Only app.user_id is set here: the member_read policy allows exactly this lookup.
