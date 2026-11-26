@@ -5,9 +5,19 @@ import { getDb } from "@/server/db/client";
 import { memberships } from "@/server/db/schema";
 import type { Ctx } from "@/server/db/tenant";
 import { getAuth } from "./auth";
+import { config } from "../config";
+import { user } from "@/server/db/auth-schema";
 
 export async function hostedSession() {
   return getAuth().api.getSession({ headers: await headers() });
+}
+
+export async function signupAllowed(): Promise<boolean> {
+  if (config.allowSignup) return true;
+  const [row] = await getDb()
+    .select({ n: sql<number>`count(*)::int` })
+    .from(user);
+  return row.n === 0;
 }
 
 // Only app.user_id is set here: the member_read policy allows exactly this lookup.

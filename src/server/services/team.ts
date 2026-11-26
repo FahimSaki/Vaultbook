@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { withTenant, type Ctx } from "@/server/db/tenant";
 import { memberships } from "@/server/db/schema";
-import { user } from "@/server/db/auth-schema";
+import { user, session } from "@/server/db/auth-schema";
 import { Forbidden, UserError } from "@/lib/errors";
 import { getAuth } from "@/server/auth/auth";
 
@@ -70,5 +70,7 @@ export async function removeStaff(ctx: Ctx, userId: string) {
       .returning(),
   );
   if (gone.length)
-    await (await getAuth().$context).internalAdapter.deleteSessions(userId);
+    await withTenant(ctx, (tx) =>
+      tx.delete(session).where(eq(session.userId, userId)),
+    );
 }
