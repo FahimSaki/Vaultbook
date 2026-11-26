@@ -40,11 +40,14 @@ export async function addStaff(
   const ac = await getAuth().$context;
   if (await ac.internalAdapter.findUserByEmail(email))
     throw new UserError("That email already has an account.");
-  const u = await ac.internalAdapter.createUser({
-    email,
-    name: i.name.trim(),
-    emailVerified: true,
-  });
+  const u = await ac.internalAdapter.createUser(
+    {
+      email,
+      name: i.name.trim(),
+      emailVerified: true,
+    },
+    { method: "email-password" },
+  );
   await ac.internalAdapter.linkAccount({
     userId: u.id,
     providerId: "credential",

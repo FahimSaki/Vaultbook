@@ -1,4 +1,5 @@
 import { LoginForm } from "@/components/HostedAuthForms";
-export default function LoginPage() {
-  return <LoginForm />;
+import { signupAllowed } from "@/server/auth/hosted";
+export default async function LoginPage() {
+  return <LoginForm showSignup={await signupAllowed()} />;
 }

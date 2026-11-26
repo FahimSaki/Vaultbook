@@ -31,7 +31,7 @@ function useAuthForm(
   return { error, busy, onSubmit };
 }
 
-export function LoginForm() {
+export function LoginForm({ showSignup }: { showSignup: boolean }) {
   const f = useAuthForm(
     (d) =>
       authClient.signIn.email({
@@ -62,11 +62,13 @@ export function LoginForm() {
       <Button type="submit" disabled={f.busy}>
         {f.busy ? "Signing in…" : "Sign in"}
       </Button>
-      <p className="text-sm">
-        <Link className="underline" href="/signup">
-          Create a shop account
-        </Link>
-      </p>
+      {showSignup ? (
+        <p className="text-sm">
+          <Link className="underline" href="/signup">
+            Create a shop account
+          </Link>
+        </p>
+      ) : null}
     </form>
   );
 }
