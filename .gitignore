@@ -46,6 +46,7 @@ dist/
 /data/
 
 !.env.example
+!.env.demo.example
 .e2e-data/
 
 test-results/

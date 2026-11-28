@@ -15,7 +15,8 @@
     "test:e2e": "playwright test",
     "db:seed": "tsx scripts/seed.ts",
     "db:migrate": "tsx --env-file=.env.local scripts/migrate.ts",
-    "selftest:portable": "bash scripts/selftest-portable.sh"
+    "selftest:portable": "bash scripts/selftest-portable.sh",
+    "db:seed-demo": "tsx --env-file=.env.demo scripts/seed-demo.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1176.0",

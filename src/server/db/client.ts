@@ -21,7 +21,10 @@ export function getDb(): Db {
     require("drizzle-orm/node-postgres") as typeof import("drizzle-orm/node-postgres");
   /* eslint-enable @typescript-eslint/no-require-imports */
 
-  g.__vbPool = new PgPool({ connectionString: config.databaseUrl, max: 10 });
+  g.__vbPool = new PgPool({
+    connectionString: config.databaseUrl,
+    max: config.mode === "cloud" ? 3 : 10,
+  });
   g.__vbDb = drizzle(g.__vbPool, { schema }) as unknown as Db;
   return g.__vbDb;
 }

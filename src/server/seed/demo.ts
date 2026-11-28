@@ -60,13 +60,11 @@ export async function seedDemo() {
   const orgId = randomUUID();
   const owner: Ctx = { userId: ids.owner, orgId, role: "owner" };
   await withTenant(owner, async (tx) => {
-    await tx
-      .insert(organizations)
-      .values({
-        id: orgId,
-        name: "Demo Shop",
-        wrappedDek: wrapDek(masterKey(), newDek(), orgId),
-      });
+    await tx.insert(organizations).values({
+      id: orgId,
+      name: "Demo Shop",
+      wrappedDek: wrapDek(masterKey(), newDek(), orgId),
+    });
     await tx
       .insert(memberships)
       .values({ userId: ids.owner, orgId, role: "owner" });
@@ -75,6 +73,8 @@ export async function seedDemo() {
       .values({ userId: ids.staff, orgId, role: "staff" });
   });
 
-  const products = await seedShop(owner);
+  const products = await seedShop(owner, {
+    photos: !!process.env.S3_BUCKET,
+  });
   return { products };
 }
