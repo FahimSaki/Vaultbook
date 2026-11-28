@@ -1,0 +1,56 @@
+# Production / self-host stack. (docker-compose.yml stays as the dev database.)
+#   ./scripts/keygen.sh
+#   docker compose --env-file .env.selfhost -f docker-compose.selfhost.yml up -d --build
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vb_owner
+      POSTGRES_DB: vaultbook
+      POSTGRES_PASSWORD: ${DB_OWNER_PASSWORD:?run scripts/keygen.sh first}
+      VB_APP_PASSWORD: ${DB_APP_PASSWORD:?run scripts/keygen.sh first}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vb_owner -d vaultbook"]
+      interval: 5s
+      retries: 10
+    # no ports: the database is only reachable from the app container
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DEPLOY_MODE: selfhost
+      DATA_DIR: /data
+      MIGRATIONS_DIR: /app/migrations
+      DATABASE_URL: postgres://vb_app:${DB_APP_PASSWORD}@db:5432/vaultbook
+      MIGRATION_DATABASE_URL: postgres://vb_owner:${DB_OWNER_PASSWORD}@db:5432/vaultbook
+      MASTER_KEY: ${MASTER_KEY:?run scripts/keygen.sh first}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?run scripts/keygen.sh first}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      ALLOW_SIGNUP: ${ALLOW_SIGNUP:-0}
+    volumes:
+      - blobs:/data
+    ports:
+      - "127.0.0.1:3000:3000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/heartbeat').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  pgdata:
+  blobs:

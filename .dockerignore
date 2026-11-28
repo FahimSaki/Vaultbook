@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.github
+.env*
+!.env.example
+dist
+data
+.devdata
+.e2e-data
+test-results
+playwright-report
+tests
+e2e

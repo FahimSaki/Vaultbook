@@ -48,5 +48,8 @@ dist/
 !.env.example
 .e2e-data/
 
+test-results/
+playwright-report/
+
 # personal
 logs.md

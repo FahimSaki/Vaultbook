@@ -9,6 +9,12 @@ const ownerOnly = (ctx: Ctx) => {
   if (ctx.role !== "owner") throw new Forbidden();
 };
 
+// The public demo must keep its two accounts intact until the nightly reset.
+const notInDemo = () => {
+  if (process.env.DEMO === "1")
+    throw new UserError("Not available in the demo.");
+};
+
 export async function listTeam(ctx: Ctx) {
   ownerOnly(ctx);
   return withTenant(
@@ -32,6 +38,7 @@ export async function addStaff(
   i: { name: string; email: string; password: string },
 ) {
   ownerOnly(ctx);
+  notInDemo();
   const email = i.email.trim().toLowerCase();
   if (!email || !i.name.trim())
     throw new UserError("Name and email are required.");
@@ -63,6 +70,7 @@ export async function addStaff(
 
 export async function removeStaff(ctx: Ctx, userId: string) {
   ownerOnly(ctx);
+  notInDemo();
   // RLS only lets the owner delete rows where role = 'staff'
   const gone = await withTenant(ctx, (tx) =>
     tx
