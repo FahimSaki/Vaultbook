@@ -10,7 +10,7 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - uses: pnpm/action-setup@v4
-            - uses: actions/setup-node@v4
+            - uses: actions/setup-node@v7
               with: { node-version: 22, cache: pnpm }
             - run: pnpm install --frozen-lockfile
             - run: pnpm lint && pnpm typecheck
@@ -36,7 +36,7 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - uses: pnpm/action-setup@v4
-            - uses: actions/setup-node@v4
+            - uses: actions/setup-node@v7
               with: { node-version: 22, cache: pnpm }
             - run: pnpm install --frozen-lockfile
             - run: psql "$MIGRATION_DATABASE_URL" -c "CREATE ROLE vb_app LOGIN PASSWORD 'ci' NOSUPERUSER NOBYPASSRLS"
@@ -52,7 +52,7 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - uses: pnpm/action-setup@v4
-            - uses: actions/setup-node@v4
+            - uses: actions/setup-node@v7
               with: { node-version: 22, cache: pnpm }
             - run: pnpm install --frozen-lockfile
             - run: pnpm exec playwright install --with-deps chromium
