@@ -87,7 +87,7 @@ jobs:
                   else zip -rq ../vaultbook-portable-${{ runner.os }}.zip Vaultbook-Portable; fi
 
             - name: Upload portable artifact
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v7
               with:
                   name: vaultbook-portable-${{ runner.os }}
                   path: vaultbook-portable-${{ runner.os }}.zip
