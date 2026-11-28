@@ -47,7 +47,7 @@ jobs:
           cd dist
           if [ "$RUNNER_OS" = Windows ]; then 7z a ../vaultbook-portable-${{ runner.os }}.zip Vaultbook-Portable
           else zip -rq ../vaultbook-portable-${{ runner.os }}.zip Vaultbook-Portable; fi
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           files: vaultbook-portable-*.zip
           prerelease: ${{ contains(github.ref_name, '-') }}
