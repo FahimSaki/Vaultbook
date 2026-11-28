@@ -19,7 +19,7 @@
     "db:seed-demo": "tsx --env-file=.env.demo scripts/seed-demo.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1176.0",
+    "@aws-sdk/client-s3": "^3.1177.0",
     "@base-ui/react": "^1.9.0",
     "@electric-sql/pglite": "^0.5.16",
     "@next/env": "16.4.6",
